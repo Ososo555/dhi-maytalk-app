@@ -1,24 +1,21 @@
-import './style.css'
-import javascriptLogo from './javascript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.js'
+const app = document.querySelector('#app');
 
-document.querySelector('#app').innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-      <img src="${javascriptLogo}" class="logo vanilla" alt="JavaScript logo" />
-    </a>
-    <h1>Hello Vite!</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite logo to learn more
-    </p>
-  </div>
-`
+app.innerHTML = `
+  <main class="container">
+    <h1>今日の質問</h1>
+    <p class="date">2026-01-28</p>
 
-setupCounter(document.querySelector('#counter'))
+    <section class="card">
+      <p class="question">
+        今日いちばん印象に残ったことは？
+      </p>
+
+      <textarea
+        class="answer"
+        placeholder="ここに入力してください"
+      ></textarea>
+    </section>
+
+    <button class="save">保存</button>
+  </main>
+`;
