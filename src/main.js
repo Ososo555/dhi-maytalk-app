@@ -252,7 +252,6 @@ function renderHistory() {
 function renderHome() {
   const content = document.querySelector('#content');
   content.innerHTML = `
-    <main class="container">
       <h1>今日の質問</h1>
 
       ${currentQuestions.map((q, i) => `
@@ -271,7 +270,6 @@ function renderHome() {
         <button id="save">保存</button>
       </div>
       <p id="status" class="status"></p>
-    </main>
   `;
 
   bindEvents();
