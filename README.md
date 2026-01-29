@@ -45,7 +45,7 @@
 
 ---
 
-## 🛠 使用技術
+## 使用技術
 
 - HTML / CSS
 - Vanilla JavaScript
@@ -55,6 +55,6 @@
 
 ---
 
-## 🚀 公開URL
+## 公開URL
 
 https://dhi-maytalk-app.vercel.app/
