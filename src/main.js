@@ -6,6 +6,12 @@ if (!app) throw new Error('#app が見つかりませんでした。');
 // 今日の日付（YYYY-MM-DD 形式）
 const today = new Date().toISOString().split('T')[0];
 
+/* 日付を日本語表記に */
+function formatDateJP(dateStr) {
+  const [y, m, d] = dateStr.split("-");
+  return `${y}年${Number(m)}月${Number(d)}日`;
+}
+
 // localStorage に保存されている全日付を取得
 const allDates = Object.keys(localStorage)
   .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key))
@@ -134,6 +140,9 @@ function pickOne(arr) {
   return arr[i];
 }
 
+/* 画面状態 */
+let screen = 'home'; // 'home' or 'history'
+let selectedDate = today; // 履歴で選んだ日付
 
 let currentQuestions = [];    // 確定した質問
 let draftAnswers = [];  // 入力の下書き
@@ -160,9 +169,89 @@ function captureDraft() {
   });
 }
 
-// 画面描画
-function render() {
+/* 画面切り替え用 */
+function renderApp() {
   app.innerHTML = `
+    <main class="container">
+      <header class="topbar">
+        <button id="tab-home" ${screen === 'home' ? 'disabled' : ''}>今日</button>
+        <button id="tab-history" ${screen === 'history' ? 'disabled' : ''}>履歴</button>
+      </header>
+
+      <section id="content"></section>
+    </main>
+  `;
+
+  document.querySelector('#tab-home').addEventListener('click', () => {
+    screen = 'home';
+    renderApp();
+  });
+
+  document.querySelector('#tab-history').addEventListener('click', () => {
+    screen = 'history';
+    renderApp();
+  });
+
+  if (screen === 'home') renderHome();
+  if (screen === 'history') renderHistory();
+}
+
+/* 履歴画面 */
+function renderHistory() {
+  const content = document.querySelector('#content');
+
+  const dates = Object.keys(localStorage)
+    .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k))
+    .sort()
+    .reverse();
+
+  const selected = localStorage.getItem(selectedDate);
+  const entry = selected ? JSON.parse(selected) : null;
+
+  content.innerHTML = `
+    <h1>履歴</h1>
+
+    <div class="history-layout">
+      <ul class="history-list">
+        ${dates.map(d => `
+          <li>
+            <button class="history-item ${d === selectedDate ? 'active' : ''}" data-date="${d}">
+              ${formatDateJP(d)}
+            </button>
+          </li>
+        `).join('')}
+      </ul>
+
+      <div class="history-detail">
+        ${entry ? `
+          <h2>${formatDateJP(selectedDate)}</h2>
+          ${entry.answers.map((a, i) => `
+            <section class="card">
+              <p><strong>Q${i+1}.</strong> ${a.question}</p>
+              <p>${(a.answer || '').replaceAll('\n','<br>')}</p>
+            </section>
+          `).join('')}
+        ` : `
+          <p>この日の記録はありません。</p>
+        `}
+      </div>
+    </div>
+  `;
+
+  // 日付クリックで詳細を切り替え
+  document.querySelectorAll('.history-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedDate = btn.dataset.date;
+      renderApp(); // 履歴画面を再描画
+    });
+  });
+}
+
+
+/* 画面描画 */
+function renderHome() {
+  const content = document.querySelector('#content');
+  content.innerHTML = `
     <main class="container">
       <h1>今日の質問</h1>
 
@@ -181,6 +270,7 @@ function render() {
         </button>
         <button id="save">保存</button>
       </div>
+      <p id="status" class="status"></p>
     </main>
   `;
 
@@ -202,7 +292,7 @@ function bindEvents() {
     } else {
       return; // 3問以上にはしない
     }
-    render(); // 再描画（Q1/Q2はそのまま）
+    renderApp(); // 再描画（Q1/Q2はそのまま）
   });
 
   // 保存：表示されている質問数ぶんだけ保存
@@ -226,9 +316,14 @@ function bindEvents() {
     localStorage.setItem(today, JSON.stringify(entry));
     draftAnswers = answers.map(a => a.answer);  // 画面復元用の下書きも、保存内容で更新
     isSavedToday = true;
-    alert('保存しました！');
-    render();
+    
+    const status = document.querySelector('#status');
+    if (status) {
+      status.textContent = '保存しました！';
+      setTimeout(() => (status.textContent = ''), 1500);
+    }
+
   });
 }
 
-render();
+renderApp();
