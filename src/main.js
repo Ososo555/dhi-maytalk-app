@@ -1,10 +1,22 @@
 const app = document.querySelector('#app');
 /* nullチェック */
 console.log('app:', app);
-if (!app) throw new Error('#app が見つからないよ！');
+if (!app) throw new Error('#app が見つかりませんでした。');
 
 // 今日の日付（YYYY-MM-DD 形式）
 const today = new Date().toISOString().split('T')[0];
+
+// localStorage に保存されている全日付を取得
+const allDates = Object.keys(localStorage)
+  .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key))
+  .sort()
+  .reverse();
+
+// 今日の質問数（最初は1問）
+let questionCount = 1;
+
+// 保存済みデータを取得
+const savedEntry = localStorage.getItem(today);
 
 /* 質問一覧（カテゴリ１：今日を振り返る系質問）*/
 const QUESTIONS = [
@@ -44,41 +56,115 @@ const QUESTIONS = [
   "今日の漢字一文字とその理由をどうぞ！"
 ];
 
+// ランダムで n 問取る関数
+function pickRandomQuestions(count) {
+  const shuffled = [...QUESTIONS].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+// 質問文と回答を配列で管理
+let currentQuestions = pickRandomQuestions(questionCount);
+
+
 /* カテゴリ１から質問をランダムに選ぶ */
-const randomIndex = Math.floor(Math.random() * QUESTIONS.length);
-const questionText = QUESTIONS[randomIndex];
+let questionText = '';
+let savedAnswer = '';
+
+if (savedEntry) {
+  // すでに保存されている場合
+  const parsed = JSON.parse(savedEntry);
+  questionText = parsed.question;
+  savedAnswer = parsed.answer;
+} else {
+  // まだ保存されていない場合
+  const randomIndex = Math.floor(Math.random() * QUESTIONS.length);
+  questionText = QUESTIONS[randomIndex];
+}
+
 
 // 画面描画
-app.innerHTML = `
-  <main class="container">
-    <h1>今日の質問</h1>
-    <section class="card">
-      <p class="question">${questionText}</p>
-      <textarea placeholder="ここに入力"></textarea>
-    </section>
-    <button>保存</button>
-  </main>
-`;
+function render() {
+  app.innerHTML = `
+    <main class="container">
+      <h1>今日の質問</h1>
 
-// テキストエリアとボタンを取得
+      ${currentQuestions.map((q, i) => `
+        <section class="card">
+          <p class="question">Q${i + 1}. ${q}</p>
+          <textarea data-index="${i}" placeholder="ここに入力"></textarea>
+        </section>
+      `).join('')}
+
+      <div class="actions">
+        <button id="add">質問を増やす</button>
+        <button id="save">保存</button>
+      </div>
+    </main>
+  `;
+
+  bindEvents();
+}
+
+
+// 日付クリックでその日の日記を表示
+const historyButtons = document.querySelectorAll('.history-item');
+
+historyButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const date = button.dataset.date;
+    if (!date) return;
+
+    const data = localStorage.getItem(date);
+    if (!data) return;
+
+    const parsed = JSON.parse(data);
+
+    alert(
+      `${date}\n\n` +
+      `質問：${parsed.question}\n\n` +
+      `回答：\n${parsed.answer}`
+    );
+  });
+});
+
+
+// 要素取得
 const textarea = document.querySelector('textarea');
 const saveButton = document.querySelector('button');
 
+
+
+function bindEvents() {
+  const addButton = document.querySelector('#add');
+  const saveButton = document.querySelector('#save');
+
+  // 質問を増やす
+  addButton.addEventListener('click', () => {
+    if (questionCount >= 3) return;
+
+    questionCount++;
+    currentQuestions = pickRandomQuestions(questionCount);
+    render();
+  });
+
 // 保存ボタンのイベント
 saveButton.addEventListener('click', () => {
-  const answer = textarea.value;
+  const answers = [...document.querySelectorAll('textarea')].map((ta, i) => ({
+    question: currentQuestions[i],
+    answer: ta.value
+  }));
 
   const entry = {
     date: today,
-    question: questionText,
-    answer: answer
+    questions: answers
   };
 
   localStorage.setItem(today, JSON.stringify(entry));
-
   alert('保存しました！');
 });
+}
 
+render();
 
 
 
