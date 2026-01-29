@@ -1,4 +1,10 @@
 const app = document.querySelector('#app');
+/* nullチェック */
+console.log('app:', app);
+if (!app) throw new Error('#app が見つからないよ！');
+
+// 今日の日付（YYYY-MM-DD 形式）
+const today = new Date().toISOString().split('T')[0];
 
 /* 質問一覧（カテゴリ１：今日を振り返る系質問）*/
 const QUESTIONS = [
@@ -42,7 +48,7 @@ const QUESTIONS = [
 const randomIndex = Math.floor(Math.random() * QUESTIONS.length);
 const questionText = QUESTIONS[randomIndex];
 
-
+// 画面描画
 app.innerHTML = `
   <main class="container">
     <h1>今日の質問</h1>
@@ -53,4 +59,26 @@ app.innerHTML = `
     <button>保存</button>
   </main>
 `;
+
+// テキストエリアとボタンを取得
+const textarea = document.querySelector('textarea');
+const saveButton = document.querySelector('button');
+
+// 保存ボタンのイベント
+saveButton.addEventListener('click', () => {
+  const answer = textarea.value;
+
+  const entry = {
+    date: today,
+    question: questionText,
+    answer: answer
+  };
+
+  localStorage.setItem(today, JSON.stringify(entry));
+
+  alert('保存しました！');
+});
+
+
+
 
